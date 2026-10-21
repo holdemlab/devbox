@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""Мінімальна заміна `unzip` (для Mason), якщо системного unzip немає і sudo теж.
+Підтримує: unzip [-o] [-q] [-d DIR] ARCHIVE.zip
+Зберігає біти виконання файлів з архіву."""
+import os
+import sys
+import zipfile
+
+args = sys.argv[1:]
+dest = "."
+archive = None
+i = 0
+while i < len(args):
+    a = args[i]
+    if a == "-d":
+        dest = args[i + 1]
+        i += 2
+        continue
+    if a.startswith("-"):
+        i += 1
+        continue
+    if archive is None:
+        archive = a
+    i += 1
+
+if not archive:
+    sys.stderr.write("usage: unzip [-o] [-d DIR] ARCHIVE\n")
+    sys.exit(10)
+
+os.makedirs(dest, exist_ok=True)
+with zipfile.ZipFile(archive) as zf:
+    for info in zf.infolist():
+        path = zf.extract(info, dest)
+        mode = (info.external_attr >> 16) & 0o777
+        if mode and not info.is_dir():
+            os.chmod(path, mode)

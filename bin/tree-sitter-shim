@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Мінімальна заміна tree-sitter CLI для nvim-treesitter (гілка main) на системах,
+# де офіційний бінарник не запускається (glibc < 2.39: Debian 12, Ubuntu 22.04 тощо).
+# Підтримує лише те, що потрібно для встановлення парсерів:
+#   tree-sitter build -o parser.so     (компілює src/parser.c [+ src/scanner.c|cc])
+#   tree-sitter --version
+set -euo pipefail
+
+case "${1:-}" in
+  --version|-V) echo "tree-sitter 0.26.1 (shim)"; exit 0 ;;
+  build) shift ;;
+  *) echo "tree-sitter shim: unsupported command '${1:-}' (only 'build' is supported)" >&2; exit 1 ;;
+esac
+
+out="parser.so"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -o|--output) out="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+
+CC_BIN="${CC:-}"
+for c in cc gcc clang; do
+  [ -n "$CC_BIN" ] && break
+  command -v "$c" >/dev/null 2>&1 && CC_BIN="$c"
+done
+[ -n "$CC_BIN" ] || { echo "tree-sitter shim: no C compiler found" >&2; exit 1; }
+
+[ -f src/parser.c ] || { echo "tree-sitter shim: src/parser.c not found in $(pwd)" >&2; exit 1; }
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+objs=()
+
+"$CC_BIN" -c -O2 -fPIC -std=c11 -I src src/parser.c -o "$tmp/parser.o"
+objs+=("$tmp/parser.o")
+
+link="$CC_BIN"
+if [ -f src/scanner.c ]; then
+  "$CC_BIN" -c -O2 -fPIC -std=c11 -I src src/scanner.c -o "$tmp/scanner.o"
+  objs+=("$tmp/scanner.o")
+elif [ -f src/scanner.cc ]; then
+  CXX_BIN="${CXX:-}"
+  for c in c++ g++ clang++; do
+    [ -n "$CXX_BIN" ] && break
+    command -v "$c" >/dev/null 2>&1 && CXX_BIN="$c"
+  done
+  [ -n "$CXX_BIN" ] || { echo "tree-sitter shim: scanner.cc needs a C++ compiler" >&2; exit 1; }
+  "$CXX_BIN" -c -O2 -fPIC -I src src/scanner.cc -o "$tmp/scanner.o"
+  objs+=("$tmp/scanner.o")
+  link="$CXX_BIN"
+fi
+
+"$link" -shared -o "$out" "${objs[@]}"
