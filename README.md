@@ -1,4 +1,4 @@
-# linux_upgrade
+# devbox
 
 Neovim у ролі IDE і tmux з пресетом для Debian/Ubuntu x86_64. **sudo не потрібен**: усе ставиться в `~/.local`.
 Тема Catppuccin Mocha спільна для обох програм.
@@ -6,8 +6,8 @@ Neovim у ролі IDE і tmux з пресетом для Debian/Ubuntu x86_64. 
 ## Встановлення
 
 ```bash
-git clone <URL-твого-репо> ~/linux_upgrade
-cd ~/linux_upgrade
+git clone <URL-твого-репо> ~/devbox
+cd ~/devbox
 bash install.sh          # або ./install.sh після chmod +x install.sh
 exec $SHELL -l
 ```
@@ -15,7 +15,7 @@ exec $SHELL -l
 Оновлення на сервері:
 
 ```bash
-cd ~/linux_upgrade && git pull && bash install.sh            # конфіги + нові інструменти
+cd ~/devbox && git pull && bash install.sh            # конфіги + нові інструменти
 bash install.sh --upgrade                                     # примусово свіжі nvim/tmux/node/go/rg/fd
 ```
 
@@ -48,7 +48,7 @@ bash install.sh --upgrade                                     # примусов
 | LSP, форматери, лінтери | Mason | `~/.local/share/nvim/mason` |
 | Плагіни tmux | TPM | `~/.tmux/plugins` |
 
-Логи встановлення лежать у `~/.cache/linux_upgrade/*.log`.
+Логи встановлення лежать у `~/.cache/devbox/*.log`.
 
 ### Обмеження без sudo
 

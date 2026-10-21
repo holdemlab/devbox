@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────────────────────
-#  linux_upgrade — Neovim (IDE) + tmux для Debian/Ubuntu x86_64, БЕЗ sudo.
+#  devbox — Neovim (IDE) + tmux для Debian/Ubuntu x86_64, БЕЗ sudo.
 #  Все встановлюється в ~/.local, конфіги — симлінками на цей репозиторій,
 #  тож оновлення = `git pull` (+ ./install.sh для нових бінарників).
 #
@@ -12,7 +12,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PREFIX="$HOME/.local"
 BIN="$PREFIX/bin"
 OPT="$PREFIX/opt"
-CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/linux_upgrade"
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/devbox"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 
 # Версії, які не мають "latest"-посилання без версії в імені файлу
@@ -357,11 +357,11 @@ setup_shell() {
   step "Налаштування shell (PATH, EDITOR, аліаси)"
   local env_file="$REPO_DIR/shell/env.sh"
   if [ "$LINK_MODE" = copy ]; then
-    mkdir -p "$HOME/.config/linux_upgrade"
-    cp "$env_file" "$HOME/.config/linux_upgrade/env.sh"
-    env_file="$HOME/.config/linux_upgrade/env.sh"
+    mkdir -p "$HOME/.config/devbox"
+    cp "$env_file" "$HOME/.config/devbox/env.sh"
+    env_file="$HOME/.config/devbox/env.sh"
   fi
-  local begin="# >>> linux_upgrade >>>" end="# <<< linux_upgrade <<<"
+  local begin="# >>> devbox >>>" end="# <<< devbox <<<"
   local block="$begin
 [ -f \"$env_file\" ] && . \"$env_file\"
 $end"
@@ -369,9 +369,9 @@ $end"
   for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
     [ "$rc" = "$HOME/.zshrc" ] && [ ! -f "$rc" ] && continue
     touch "$rc"
-    if grep -qF "$begin" "$rc"; then
-      # оновити блок (шлях до репозиторію міг змінитися)
-      awk -v b="$begin" -v e="$end" '$0==b{skip=1} !skip{print} $0==e{skip=0}' "$rc" > "$TMP/rc"
+    # прибрати старий блок (шлях до репозиторію міг змінитися; також стара назва linux_upgrade)
+    if grep -qE '^# >>> (devbox|linux_upgrade) >>>$' "$rc"; then
+      awk '/^# >>> (devbox|linux_upgrade) >>>$/{skip=1} !skip{print} /^# <<< (devbox|linux_upgrade) <<<$/{skip=0}' "$rc" > "$TMP/rc"
       cat "$TMP/rc" > "$rc"
     fi
     printf '\n%s\n' "$block" >> "$rc"
@@ -380,7 +380,7 @@ $end"
 }
 
 # ─── Запуск ───────────────────────────────────────────────────────────────────
-printf '%slinux_upgrade%s: nvim=%s tmux=%s node=%s go=%s (%s)\n' "$C_B" "$C_0" \
+printf '%sdevbox%s: nvim=%s tmux=%s node=%s go=%s (%s)\n' "$C_B" "$C_0" \
   "$DO_NVIM" "$DO_TMUX" "$DO_NODE" "$DO_GO" "$LINK_MODE"
 
 if [ "$DO_NVIM" = 1 ]; then
